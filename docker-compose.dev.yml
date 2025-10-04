@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    env_file: .env
+    command: ["flask", "--app", "app", "run", "--host=0.0.0.0", "--port=5000", "--debug"]
+    ports:
+      - "5000:5000"         #  this line exposes your backend to localhost
+    volumes:
+      - ./backend:/app      # optional hot-reload for local development
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  dbdata:
